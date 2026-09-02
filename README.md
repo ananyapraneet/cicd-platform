@@ -78,7 +78,7 @@ Stage 1 — Application + Repository
 - [x] Git repository
 - [x] GitHub repository
 - [x] Initial README
-- [ ] Docker
+- [x] Docker
 - [ ] CI pipeline
 - [ ] Security scanning
 - [ ] Container registry
