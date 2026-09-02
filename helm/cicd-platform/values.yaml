@@ -1,0 +1,26 @@
+replicaCount: 2
+
+image:
+  repository: ghcr.io/ananyapraneet/cicd-platform
+  pullPolicy: IfNotPresent
+  tag: "bc39a26c72ff65df28808955ca5c9b4d6c5a7f9a"
+
+service:
+  type: ClusterIP
+  port: 8000
+
+resources: {}
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 10
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: 8000
+  initialDelaySeconds: 5
+  periodSeconds: 10
