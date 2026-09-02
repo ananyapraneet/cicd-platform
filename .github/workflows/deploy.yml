@@ -1,4 +1,4 @@
-name: Deploy Development
+name: Deploy Application
 
 on:
   workflow_run:
@@ -31,3 +31,29 @@ jobs:
       - name: Deploy development
         run: |
           ./scripts/deploy.sh dev ${{ github.event.workflow_run.head_sha }}
+
+  deploy-production:
+    needs: deploy-development
+    if: ${{ needs.deploy-development.result == 'success' }}
+    runs-on:
+      - self-hosted
+      - macOS
+      - X64
+
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Verify Kubernetes context
+        run: |
+          kubectl config current-context
+          kubectl get nodes
+
+      - name: Deploy production
+        run: |
+          ./scripts/deploy.sh prod ${{ github.event.workflow_run.head_sha }}

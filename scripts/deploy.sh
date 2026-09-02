@@ -22,6 +22,7 @@ esac
 
 RELEASE="cicd-platform-${ENVIRONMENT}"
 VALUES_FILE="helm/cicd-platform/values-${ENVIRONMENT}.yaml"
+LOCAL_PORT=18000
 
 echo "Deploying ${RELEASE}"
 echo "Image tag: ${IMAGE_TAG}"
@@ -37,7 +38,45 @@ kubectl rollout status \
     "deployment/${RELEASE}" \
     --timeout=120s
 
-echo "Deployment successful."
+echo "Deployment rollout successful."
 
 kubectl get deployment "$RELEASE"
+
+echo "Current image:"
+kubectl get deployment "$RELEASE" \
+    -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+
+echo "Running pods:"
 kubectl get pods -l "app.kubernetes.io/instance=${RELEASE}"
+
+echo "Starting temporary port-forward..."
+
+kubectl port-forward \
+    "service/${RELEASE}" \
+    "${LOCAL_PORT}:8000" >/tmp/cicd-platform-port-forward.log 2>&1 &
+
+PORT_FORWARD_PID=$!
+
+cleanup() {
+    kill "$PORT_FORWARD_PID" 2>/dev/null || true
+}
+
+trap cleanup EXIT
+
+echo "Checking application health..."
+
+for attempt in {1..10}; do
+    if curl --fail --silent --show-error \
+        "http://127.0.0.1:${LOCAL_PORT}/health"; then
+        echo
+        echo "Application health check passed."
+        echo "Deployment verification successful."
+        exit 0
+    fi
+
+    echo "Health check attempt ${attempt}/10 failed. Retrying..."
+    sleep 2
+done
+
+echo "Application health check failed."
+exit 1
