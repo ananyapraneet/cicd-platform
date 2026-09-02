@@ -42,6 +42,10 @@ echo "Deployment rollout successful."
 
 kubectl get deployment "$RELEASE"
 
+echo "Current image:"
+kubectl get deployment "$RELEASE" \
+    -o jsonpath='{.spec.template.spec.containers[0].image}{"\n"}'
+
 echo "Running pods:"
 kubectl get pods -l "app.kubernetes.io/instance=${RELEASE}"
 
